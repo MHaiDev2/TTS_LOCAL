@@ -137,8 +137,8 @@ def process_text_to_audio_with_progress(text, voice='af_heart', speed=1, use_gpu
     text_chunks = list(pipeline(text, voice, speed))
     total_chunks = len(text_chunks)
     
-    print(f"🎵 Starting audio generation for {filename}")
-    print(f"📊 Total text chunks to process: {total_chunks}")
+    print(f"[AUDIO] Starting audio generation for {filename}")
+    print(f"[INFO] Total text chunks to process: {total_chunks}")
     
     for i, (_, ps, _) in enumerate(text_chunks):
         ref_s = pack[len(ps)-1]
@@ -147,7 +147,7 @@ def process_text_to_audio_with_progress(text, voice='af_heart', speed=1, use_gpu
         progress_interval = max(1, total_chunks // 10)
         if i % progress_interval == 0 or i == total_chunks - 1:
             chunk_progress = int((i + 1) / total_chunks * 100)
-            print(f"🔄 Processing chunk {i+1}/{total_chunks} ({chunk_progress}%) for {filename}")
+            print(f"[PROGRESS] Processing chunk {i+1}/{total_chunks} ({chunk_progress}%) for {filename}")
         
         try:
             if use_gpu:
@@ -161,7 +161,7 @@ def process_text_to_audio_with_progress(text, voice='af_heart', speed=1, use_gpu
         audio_chunks.append(audio.numpy())
     
     if audio_chunks:
-        print(f"✅ Audio generation completed for {filename}")
+        print(f"[SUCCESS] Audio generation completed for {filename}")
         return np.concatenate(audio_chunks)
     return None
 
@@ -214,13 +214,13 @@ def auto_process_files():
         processing_status["remaining"] = txt_files.copy()
         processing_status["total_files"] = len(txt_files)
         
-        log_message(f"🚀 AUTO-PROCESSING STARTED: {start_time.strftime('%Y-%m-%d at %H:%M:%S')}")
-        log_message(f"📁 Found files in {RAWMATERIAL_FOLDER}: {len(txt_files)}")
+        log_message(f"[START] AUTO-PROCESSING STARTED: {start_time.strftime('%Y-%m-%d at %H:%M:%S')}")
+        log_message(f"[FILES] Found files in {RAWMATERIAL_FOLDER}: {len(txt_files)}")
         log_message("=" * 50)
         
         for file_index, txt_file in enumerate(txt_files):
             if not auto_processing:  # Stop if cancelled
-                log_message("⏹️ Auto-Processing stopped")
+                log_message("[STOP] Auto-Processing stopped")
                 break
             
             # Update current file status
@@ -229,19 +229,19 @@ def auto_process_files():
             current_progress = int((file_index / len(txt_files)) * 100)
             processing_status["progress_percent"] = current_progress
             
-            log_message(f"\n📖 FILE {file_index + 1}/{len(txt_files)} ({current_progress}%)")
-            log_message(f"📄 Processing: {txt_file}")
-            log_message(f"⏰ Started: {processing_status['current_file_start'].strftime('%H:%M:%S')}")
+            log_message(f"\n[FILE] FILE {file_index + 1}/{len(txt_files)} ({current_progress}%)")
+            log_message(f"[PROCESS] Processing: {txt_file}")
+            log_message(f"[TIME] Started: {processing_status['current_file_start'].strftime('%H:%M:%S')}")
             
             # Read content from rawmaterial folder
             content = read_txt_content_from_rawmaterial(txt_file)
             if not content:
                 error_msg = f"Could not read {txt_file} from rawmaterial folder"
                 processing_status["errors"].append(error_msg)
-                print(f"❌ {error_msg}")
+                print(f"[ERROR] {error_msg}")
                 continue
             
-            log_message(f"📝 Text length: {len(content)} characters")
+            log_message(f"[TEXT] Text length: {len(content)} characters")
             
             # Generate filename for audio
             base_name = os.path.splitext(os.path.basename(txt_file))[0]
@@ -258,7 +258,7 @@ def auto_process_files():
                 )
                 
                 if audio_data is not None:
-                    print(f"💾 Saving audio as {audio_filename}...")
+                    print(f"[SAVE] Saving audio as {audio_filename}...")
                     # Save to output folder
                     success = save_audio_to_output(audio_data, audio_filename)
                     
@@ -272,28 +272,28 @@ def auto_process_files():
                             # Calculate file processing time
                             file_duration = (datetime.datetime.now() - processing_status["current_file_start"]).total_seconds()
                             
-                            print(f"✅ SUCCESS: {txt_file}")
-                            print(f"⏱️  File processing time: {format_duration(file_duration)}")
-                            print(f"📁 File moved to done/")
+                            print(f"[SUCCESS] SUCCESS: {txt_file}")
+                            print(f"[TIME] File processing time: {format_duration(file_duration)}")
+                            print(f"[MOVED] File moved to done/")
                         else:
                             processing_status["errors"].append(f"Processed {txt_file} but could not move to done folder")
                     else:
                         processing_status["errors"].append(f"Failed to save audio for {txt_file}")
-                        print(f"❌ Error saving {txt_file}")
+                        print(f"[ERROR] Error saving {txt_file}")
                 else:
                     processing_status["errors"].append(f"Failed to generate audio for {txt_file}")
-                    print(f"❌ Error generating audio for {txt_file}")
+                    print(f"[ERROR] Error generating audio for {txt_file}")
                     
             except Exception as e:
                 error_msg = f"Error processing {txt_file}: {str(e)}"
                 processing_status["errors"].append(error_msg)
-                print(f"❌ {error_msg}")
+                print(f"[ERROR] {error_msg}")
             
             # Small delay between files
             time.sleep(2)
     
     except Exception as e:
-        print(f"❌ Auto-processing error: {e}")
+        print(f"[ERROR] Auto-processing error: {e}")
     
     finally:
         # Final status update
@@ -305,14 +305,14 @@ def auto_process_files():
         auto_processing = False
         
         log_message("\n" + "=" * 50)
-        log_message(f"🏁 AUTO-PROCESSING FINISHED: {end_time.strftime('%Y-%m-%d at %H:%M:%S')}")
-        log_message(f"⏱️  Total runtime: {format_duration(total_duration)}")
-        log_message(f"✅ Successfully processed: {len(processing_status['completed'])}")
-        log_message(f"❌ Errors: {len(processing_status['errors'])}")
+        log_message(f"[FINISH] AUTO-PROCESSING FINISHED: {end_time.strftime('%Y-%m-%d at %H:%M:%S')}")
+        log_message(f"[RUNTIME] Total runtime: {format_duration(total_duration)}")
+        log_message(f"[SUCCESS] Successfully processed: {len(processing_status['completed'])}")
+        log_message(f"[ERRORS] Errors: {len(processing_status['errors'])}")
         
         if processing_status['completed']:
             avg_time = total_duration / len(processing_status['completed'])
-            log_message(f"📊 Average time per file: {format_duration(avg_time)}")
+            log_message(f"[AVGTIME] Average time per file: {format_duration(avg_time)}")
 
 def start_auto_processing():
     """Start auto-processing in background thread"""
@@ -320,14 +320,14 @@ def start_auto_processing():
         thread = threading.Thread(target=auto_process_files)
         thread.daemon = True
         thread.start()
-        return "🚀 Auto-Processing started..."
-    return "⚠️ Already running..."
+        return "[START] Auto-Processing started..."
+    return "[WARNING] Already running..."
 
 def stop_auto_processing():
     """Stop auto-processing"""
     global auto_processing
     auto_processing = False
-    return "⏹️ Auto-Processing stopped"
+    return "[STOP] Auto-Processing stopped"
 
 def get_processing_status():
     """Get current processing status with enhanced information"""
@@ -359,41 +359,41 @@ def get_processing_status():
             avg_time_per_file = elapsed / processing_status["processed_files"]
             remaining_files = processing_status["total_files"] - processing_status["processed_files"]
             estimated_remaining = avg_time_per_file * remaining_files
-            remaining_estimate = f"\n⏳ Estimated remaining: {format_duration(estimated_remaining)}"
+            remaining_estimate = f"\n[EST] Estimated remaining: {format_duration(estimated_remaining)}"
         
-        status = f"""🔄 AUTO-PROCESSING RUNNING
+        status = f"""[RUNNING] AUTO-PROCESSING RUNNING
 
-📊 PROGRESS: {overall_progress}% ({processing_status['processed_files']}/{processing_status['total_files']})
-⏰ Total runtime: {elapsed_str}{remaining_estimate}
+[PROGRESS] PROGRESS: {overall_progress}% ({processing_status['processed_files']}/{processing_status['total_files']})
+[RUNTIME] Total runtime: {elapsed_str}{remaining_estimate}
 
-📄 Current file: {os.path.basename(processing_status['current']) if processing_status['current'] else 'None'}{current_file_time}
-📁 Source: {RAWMATERIAL_FOLDER}
-💾 Output: {OUTPUT_FOLDER}
+[CURRENT] Current file: {os.path.basename(processing_status['current']) if processing_status['current'] else 'None'}{current_file_time}
+[SOURCE] Source: {RAWMATERIAL_FOLDER}
+[OUTPUT] Output: {OUTPUT_FOLDER}
 
-✅ Completed: {len(processing_status['completed'])}
-📋 Remaining: {len(processing_status['remaining'])}
-❌ Errors: {len(processing_status['errors'])}"""
+[COMPLETED] Completed: {len(processing_status['completed'])}
+[REMAINING] Remaining: {len(processing_status['remaining'])}
+[ERRORS] Errors: {len(processing_status['errors'])}"""
 
         if processing_status['errors']:
-            status += f"\n\n🚨 Recent errors:\n" + "\n".join([f"• {error}" for error in processing_status['errors'][-3:]])
+            status += f"\n\n[ERRORS] Recent errors:\n" + "\n".join([f"• {error}" for error in processing_status['errors'][-3:]])
     else:
         if processing_status.get("start_time"):
             # Show final summary
             end_time = datetime.datetime.now()
             if processing_status.get("processed_files", 0) > 0:
                 total_time = format_duration((end_time - processing_status["start_time"]).total_seconds())
-                status = f"""✅ AUTO-PROCESSING FINISHED
+                status = f"""[FINISHED] AUTO-PROCESSING FINISHED
 
-⏰ Total runtime: {total_time}
-✅ Successful: {len(processing_status.get('completed', []))}
-❌ Errors: {len(processing_status.get('errors', []))}
-📁 Source: {RAWMATERIAL_FOLDER}
+[RUNTIME] Total runtime: {total_time}
+[SUCCESS] Successful: {len(processing_status.get('completed', []))}
+[ERRORS] Errors: {len(processing_status.get('errors', []))}
+[SOURCE] Source: {RAWMATERIAL_FOLDER}
 
-🎉 All available files have been processed!"""
+[COMPLETE] All available files have been processed!"""
             else:
-                status = "⏹️ Auto-Processing stopped"
+                status = "[STOPPED] Auto-Processing stopped"
         else:
-            status = f"⭕ Ready to start\n📁 Source: {RAWMATERIAL_FOLDER}\n💾 Output: {OUTPUT_FOLDER}"
+            status = f"[READY] Ready to start\n[SOURCE] Source: {RAWMATERIAL_FOLDER}\n[OUTPUT] Output: {OUTPUT_FOLDER}"
     
     return status
 
@@ -592,51 +592,51 @@ with gr.Blocks() as stream_tab:
     save_checkbox = gr.Checkbox(label="Save to Output", value=False, info="Save complete audio to local output folder")
     with gr.Accordion('Note', open=True):
         gr.Markdown(STREAM_NOTE)
-        storage_info = gr.Markdown("**Storage:** ✅ Local output folder configured")
+        storage_info = gr.Markdown("**Storage:** [OK] Local output folder configured")
 
 # Enhanced Auto-Processing Tab
 with gr.Blocks() as auto_tab:
-    gr.Markdown("## 🚀 Auto-Process Text Files")
+    gr.Markdown("## [AUTO] Auto-Process Text Files")
     gr.Markdown(f"Automatically converts all .txt files from **{RAWMATERIAL_FOLDER}/** to audiobooks and saves them to **{OUTPUT_FOLDER}/**.")
     
     with gr.Row():
-        start_auto_btn = gr.Button('▶️ Start Auto-Processing', variant='primary')
-        stop_auto_btn = gr.Button('⏹️ Stop', variant='stop')
+        start_auto_btn = gr.Button('[START] Start Auto-Processing', variant='primary')
+        stop_auto_btn = gr.Button('[STOP] Stop', variant='stop')
     
     with gr.Row():
         with gr.Column():
             status_display = gr.Textbox(
-                label="📊 Processing Status", 
+                label="[STATUS] Processing Status", 
                 interactive=False, 
                 lines=8,
-                value=f"⭕ Ready to start\n📁 Source: {RAWMATERIAL_FOLDER}\n💾 Output: {OUTPUT_FOLDER}"
+                value=f"[READY] Ready to start\n[SOURCE] Source: {RAWMATERIAL_FOLDER}\n[OUTPUT] Output: {OUTPUT_FOLDER}"
             )
         with gr.Column():
             live_logs = gr.Textbox(
-                label="📝 Live Logs", 
+                label="[LOGS] Live Logs", 
                 interactive=False, 
                 lines=8,
                 value="Waiting for auto-processing to start...",
                 max_lines=50
             )
-    refresh_status_btn = gr.Button('🔄 Refresh Status', variant='secondary')
+    refresh_status_btn = gr.Button('[REFRESH] Refresh Status', variant='secondary')
     
-    gr.Markdown("### 📋 Features:")
+    gr.Markdown("### [FEATURES] Features:")
     gr.Markdown(f"""
-    - 📁 **Local Processing**: Reads .txt files from {RAWMATERIAL_FOLDER}/
-    - ⏰ **Timestamps**: Start and end times are logged  
-    - 📊 **Progress Display**: Percentage display and processed files
-    - ⚡ **Speed Measurement**: Time per file and estimated remaining time
-    - 🔍 **Detailed Logs**: Progress every ~10% during audio generation
-    - 💾 **Automatic Saving**: As [filename].wav to {OUTPUT_FOLDER}/
-    - 📁 **Smart Moving**: .txt files moved to done/ after successful processing
+    - **Local Processing**: Reads .txt files from {RAWMATERIAL_FOLDER}/
+    - **Timestamps**: Start and end times are logged  
+    - **Progress Display**: Percentage display and processed files
+    - **Speed Measurement**: Time per file and estimated remaining time
+    - **Detailed Logs**: Progress every ~10% during audio generation
+    - **Automatic Saving**: As [filename].wav to {OUTPUT_FOLDER}/
+    - **Smart Moving**: .txt files moved to done/ after successful processing
     """)
     
-    gr.Markdown("### 🛠️ Instructions:")
+    gr.Markdown("### [INSTRUCTIONS] Instructions:")
     gr.Markdown(f"""
     1. Place your text files in the **{RAWMATERIAL_FOLDER}/** folder
-    2. Click '▶️ Start Auto-Processing'
-    3. Monitor progress with '🔄 Refresh Status'
+    2. Click '[START] Start Auto-Processing'
+    3. Monitor progress with '[REFRESH] Refresh Status'
     4. Find generated audio files in the **{OUTPUT_FOLDER}/** folder
     5. Processed .txt files are automatically moved to **{DONE_FOLDER}/**
     """)
@@ -664,10 +664,10 @@ with gr.Blocks() as app:
                     interactive=CUDA_AVAILABLE
                 )
             speed = gr.Slider(minimum=0.5, maximum=2, value=1, step=0.1, label='Speed')
-            random_btn = gr.Button('🎲 Random Quote 💬', variant='secondary')
+            random_btn = gr.Button('[RANDOM] Random Quote', variant='secondary')
             with gr.Row():
-                gatsby_btn = gr.Button('🥂 Gatsby 📕', variant='secondary')
-                frankenstein_btn = gr.Button('💀 Frankenstein 📗', variant='secondary')
+                gatsby_btn = gr.Button('[GATSBY] Gatsby', variant='secondary')
+                frankenstein_btn = gr.Button('[FRANK] Frankenstein', variant='secondary')
         with gr.Column():
             gr.TabbedInterface([generate_tab, stream_tab, auto_tab], ['Generate', 'Stream', 'Auto-Process'])
     
